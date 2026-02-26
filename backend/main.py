@@ -88,7 +88,7 @@ async def detect_objects(files: List[UploadFile] = File(...)):
                 class_names = ['barred_spiral', 'cigarshaped', 'completely_round', 'irregular', 'lenticular', 'unbarred_spiral']
                 class_name = class_names[int(class_id)] if int(class_id) < len(class_names) else f"class_{int(class_id)}"
                 label = f"{class_name}"
-                font_scale = w_box / 250 
+                font_scale = max(w_box, h_box) / 250 
                 cv2.putText(image_with_boxes, label, (x, y - 5), 
                            cv2.FONT_HERSHEY_SIMPLEX, font_scale, (0, 255, 0), 2)
             h, w = image_with_boxes.shape[:2]

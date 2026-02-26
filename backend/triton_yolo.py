@@ -13,7 +13,7 @@ class TritonYOLO:
     def prepare_input(self, image):
         self.img_h, self.img_w = image.shape[:2]
         input_img = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-        input_img = cv2.resize(input_img, (640, 640))
+        input_img = cv2.resize(input_img, (224, 224))
         input_img = input_img / 255.0
         input_img = input_img.transpose(2, 0, 1)
         input_tensor = input_img[np.newaxis, :, :, :].astype(np.float32)
@@ -42,7 +42,7 @@ class TritonYOLO:
 
     def extract_boxes(self, predictions):
         boxes = predictions[:, :4]
-        boxes = self.rescale_boxes(boxes, (640, 640), (self.img_h, self.img_w))
+        boxes = self.rescale_boxes(boxes, (224, 224), (self.img_h, self.img_w))
         boxes = self.yolo_to_standard(boxes)
         boxes[:, 0] = np.clip(boxes[:, 0], 0, self.img_w)
         boxes[:, 1] = np.clip(boxes[:, 1], 0, self.img_h)

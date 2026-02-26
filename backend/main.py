@@ -119,11 +119,20 @@ async def save_image(data: dict):
         image_base64 = data.get("image_base64")
         detections = data.get("detections", [])
         
-        if image_base64 and image_base64.startswith("data:image"):
-            image_data = base64.b64decode(image_base64.split(",")[1])
-            file_path = STORAGE_PATH / filename
-            with open(file_path, "wb") as f:
-                f.write(image_data)
+        logger.info(f"Saving image: {filename}")
+        logger.info(f"Base64 data length: {len(image_base64) if image_base64 else 0}")
+        
+        if image_base64:
+            try:
+                image_data = base64.b64decode(image_base64)
+                logger.info(f"Decoded image size: {len(image_data)} bytes")
+                
+                file_path = STORAGE_PATH / filename
+                with open(file_path, "wb") as f:
+                    f.write(image_data)
+                logger.info(f"File saved: {file_path}")
+            except Exception as e:
+                logger.error(f"Base64 decode error: {e}")
         
         metadata = {
             "filename": filename,
@@ -138,9 +147,10 @@ async def save_image(data: dict):
         return {"status": "saved", "filename": filename}
         
     except Exception as e:
-        logger.error(f"Error saving image: {e}")
+        logger.error(f"Error saving image: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=str(e))
-
+    
+    
 @app.get("/api/images")
 async def get_images():
     try:

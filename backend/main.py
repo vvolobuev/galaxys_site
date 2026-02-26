@@ -33,7 +33,7 @@ METADATA_PATH = Path("/app/storage/metadata")
 STORAGE_PATH.mkdir(parents=True, exist_ok=True)
 METADATA_PATH.mkdir(parents=True, exist_ok=True)
 
-yolo = TritonYOLO(server_url=TRITON_URL, conf_threshold=0.5, iou_threshold=0.45)
+yolo = TritonYOLO(server_url=TRITON_URL, conf_threshold=0.25, iou_threshold=0.3)
 
 @app.get("/health")
 async def health_check():

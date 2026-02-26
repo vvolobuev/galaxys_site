@@ -90,8 +90,12 @@ async def detect_objects(files: List[UploadFile] = File(...)):
                 label = f"{class_name}"
                 cv2.putText(image_with_boxes, label, (x, y - 5), 
                            cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
-            
-            _, buffer = cv2.imencode('.jpg', image_with_boxes)
+            h, w = image_with_boxes.shape[:2]
+            new_w = 424
+            new_h = int((h / w) * new_w)
+            image_resized = cv2.resize(image_with_boxes, (new_w, new_h))
+
+            _, buffer = cv2.imencode('.jpg', image_resized)
             image_base64 = base64.b64encode(buffer).decode('utf-8')
             
             detections = []

@@ -1,0 +1,35 @@
+version: '3.8'
+
+services:
+  backend:
+    build: ./backend
+    container_name: detection_backend
+    restart: unless-stopped
+    environment:
+      - TRITON_URL=${TRITON_URL:-91.229.8.190:8000}
+    volumes:
+      - ./backend/uploads:/app/uploads
+      - ./backend/data:/app/data
+    networks:
+      - detection_network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  frontend:
+    build: ./frontend
+    container_name: detection_frontend
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    depends_on:
+      backend:
+        condition: service_healthy
+    networks:
+      - detection_network
+
+networks:
+  detection_network:
+    driver: bridge

@@ -1,15 +1,12 @@
-version: '3.8'
-
 services:
   backend:
     build: ./backend
     container_name: detection_backend
     restart: unless-stopped
     environment:
-      - TRITON_URL=${TRITON_URL:-91.229.8.190:8000}
+      - TRITON_URL=${TRITON_URL:-172.17.0.1:8000}
     volumes:
-      - ./backend/uploads:/app/uploads
-      - ./backend/data:/app/data
+      - ./backend/storage:/app/storage
     networks:
       - detection_network
     healthcheck:

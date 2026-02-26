@@ -6,7 +6,10 @@ import cv2
 import base64
 from typing import List
 import os
+import json
+import uuid
 from datetime import datetime
+from pathlib import Path
 from triton_yolo import TritonYOLO
 import logging
 
@@ -24,6 +27,11 @@ app.add_middleware(
 )
 
 TRITON_URL = os.getenv("TRITON_URL", "host.docker.internal:8000")
+
+STORAGE_PATH = Path("/app/storage/images")
+METADATA_PATH = Path("/app/storage/metadata")
+STORAGE_PATH.mkdir(parents=True, exist_ok=True)
+METADATA_PATH.mkdir(parents=True, exist_ok=True)
 
 yolo = TritonYOLO(server_url=TRITON_URL, conf_threshold=0.5, iou_threshold=0.45)
 
@@ -102,6 +110,60 @@ async def detect_objects(files: List[UploadFile] = File(...)):
     
     except Exception as e:
         logger.error(f"Unexpected error: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/api/images/save")
+async def save_image(data: dict):
+    try:
+        filename = data.get("filename", f"image_{uuid.uuid4()}.jpg")
+        image_base64 = data.get("image_base64")
+        detections = data.get("detections", [])
+        
+        if image_base64 and image_base64.startswith("data:image"):
+            image_data = base64.b64decode(image_base64.split(",")[1])
+            file_path = STORAGE_PATH / filename
+            with open(file_path, "wb") as f:
+                f.write(image_data)
+        
+        metadata = {
+            "filename": filename,
+            "detections": detections,
+            "date": datetime.now().isoformat()
+        }
+        
+        metadata_path = METADATA_PATH / f"{filename}.json"
+        with open(metadata_path, "w") as f:
+            json.dump(metadata, f, indent=2)
+        
+        return {"status": "saved", "filename": filename}
+        
+    except Exception as e:
+        logger.error(f"Error saving image: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/images")
+async def get_images():
+    try:
+        images = []
+        for metadata_file in METADATA_PATH.glob("*.json"):
+            with open(metadata_file, "r") as f:
+                metadata = json.load(f)
+                img_path = STORAGE_PATH / metadata["filename"]
+                if img_path.exists():
+                    with open(img_path, "rb") as img_f:
+                        img_base64 = base64.b64encode(img_f.read()).decode('utf-8')
+                        images.append({
+                            "id": metadata_file.stem,
+                            "filename": metadata["filename"],
+                            "image_base64": img_base64,
+                            "detections": metadata["detections"],
+                            "date": metadata["date"]
+                        })
+        
+        return {"images": images}
+        
+    except Exception as e:
+        logger.error(f"Error loading images: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 if __name__ == "__main__":

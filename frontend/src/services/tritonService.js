@@ -65,10 +65,10 @@ class TritonService {
       if (response.data && response.data.images) {
         return response.data.images.map(img => ({
           id: img.id,
-          url: img.image_base64 ? `data:image/jpeg;base64,${img.image_base64}` : img.url,
-          date: img.date || new Date().toLocaleDateString(),
-          detections: img.detections ? img.detections.length : 0,
-          boxes: img.detections || []
+          url: `data:image/jpeg;base64,${img.image_base64}`,
+          date: new Date(img.date).toLocaleString(),
+          detections: img.detections.length,
+          boxes: img.detections
         }))
       }
       
@@ -83,10 +83,9 @@ class TritonService {
   async saveResult(imageData) {
     try {
       const response = await this.client.post('/api/images/save', {
-        filename: imageData.filename,
+        filename: imageData.filename || `${Date.now()}.jpg`,
         image_base64: imageData.image_base64,
-        detections: imageData.detections,
-        date: new Date().toISOString()
+        detections: imageData.detections
       })
       
       return response.data

@@ -43,7 +43,7 @@ async def health_check():
         "timestamp": datetime.now().isoformat()
     }
 
-@app.post("/detect")
+@app.post("/api/detect")
 async def detect_objects(files: List[UploadFile] = File(...)):
     try:
         results = []

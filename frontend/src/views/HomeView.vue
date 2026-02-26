@@ -32,12 +32,7 @@
       <h2>Результаты детекции</h2>
       <div class="image-grid">
         <div v-for="(image, index) in processedImages" :key="index" class="image-card result-card" @click="openModal(image)">
-          <DetectionImage
-            :imageUrl="image.resultUrl"
-            :boxes="image.boxes"
-            :originalWidth="640"
-            :originalHeight="640"
-          />
+          <img :src="image.resultUrl" class="result-image">
           <div class="image-info">
             <p>Найдено объектов: {{ image.detections }}</p>
             <p class="image-date">{{ image.date }}</p>

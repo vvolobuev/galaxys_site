@@ -292,7 +292,7 @@ export default {
 
 .hint {
   font-size: 0.9rem;
-  color: #adb5bd46;
+  color: #adb5bd;
 }
 
 .file-list {

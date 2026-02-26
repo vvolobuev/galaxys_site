@@ -85,7 +85,9 @@ async def detect_objects(files: List[UploadFile] = File(...)):
                 h_box = int(h_box)
                 
                 cv2.rectangle(image_with_boxes, (x, y), (x + w_box, y + h_box), (0, 255, 0), 2)
-                label = f"{int(class_id)}: {score:.2f}"
+                class_names = ['barred_spiral', 'cigarshaped', 'completely_round', 'irregular', 'lenticular', 'unbarred_spiral']
+                class_name = class_names[int(class_id)] if int(class_id) < len(class_names) else f"class_{int(class_id)}"
+                label = f"{class_name}"
                 cv2.putText(image_with_boxes, label, (x, y - 5), 
                            cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
             

@@ -38,7 +38,7 @@ yolo = TritonYOLO(server_url=TRITON_URL, conf_threshold=0.5, iou_threshold=0.45)
 @app.get("/health")
 async def health_check():
     try:
-        dummy = np.zeros((640, 640, 3), dtype=np.uint8)
+        dummy = np.zeros((224, 224, 3), dtype=np.uint8)
         boxes, scores, class_ids = yolo.run(dummy)
         triton_status = "connected"
     except Exception as e:

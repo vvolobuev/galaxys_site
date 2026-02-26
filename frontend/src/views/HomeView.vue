@@ -173,20 +173,19 @@ export default {
     clearResults() {
       this.processedImages = []
     },
-    saveResults() {
-      const saved = JSON.parse(localStorage.getItem('labeledImages') || '[]')
-      const newImages = this.processedImages.map(img => ({
-        url: img.resultUrl,
-        date: img.date,
-        detections: img.detections,
-        boxes: img.boxes,
-        width: 'Оригинал',
-        height: 'Оригинал'
-      }))
-      
-      localStorage.setItem('labeledImages', JSON.stringify([...newImages, ...saved]))
-      alert('Результаты сохранены в раздел "Размеченные"')
-    }
+    async saveResults() {
+  for (const img of this.processedImages) {
+    // Извлекаем только base64 данные без префикса
+    const base64Data = img.resultUrl.split(',')[1]
+    
+    await tritonService.saveResult({
+      filename: `${Date.now()}_${img.name || 'image'}.jpg`,
+      image_base64: base64Data,
+      detections: img.boxes
+    })
+  }
+  alert('Результаты сохранены на сервере')
+}
   }
 }
 </script>

@@ -1,7 +1,7 @@
 <template>
   <nav class="navigation">
     <div class="nav-container">
-      <router-link to="/" class="logo">Object Detection</router-link>
+      <router-link to="/" class="logo">Galaxy Detection</router-link>
       <div class="nav-right">
         <div class="nav-links">
           <router-link to="/" class="nav-link" :class="{ active: $route.path === '/' }">

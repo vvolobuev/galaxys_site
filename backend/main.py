@@ -8,6 +8,10 @@ from typing import List
 import os
 from datetime import datetime
 from triton_yolo import TritonYOLO
+import logging
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 app = FastAPI(title="Object Detection API")
 
@@ -19,7 +23,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-TRITON_URL = os.getenv("TRITON_URL", "91.229.8.190:8000")
+TRITON_URL = os.getenv("TRITON_URL", "host.docker.internal:8000")
 
 yolo = TritonYOLO(server_url=TRITON_URL, conf_threshold=0.5, iou_threshold=0.45)
 
@@ -29,7 +33,8 @@ async def health_check():
         dummy = np.zeros((640, 640, 3), dtype=np.uint8)
         boxes, scores, class_ids = yolo.run(dummy)
         triton_status = "connected"
-    except:
+    except Exception as e:
+        logger.error(f"Triton health check error: {e}")
         triton_status = "disconnected"
 
     return {
@@ -38,20 +43,29 @@ async def health_check():
         "timestamp": datetime.now().isoformat()
     }
 
-@app.post("/api/detect")
+@app.post("/detect")
 async def detect_objects(files: List[UploadFile] = File(...)):
     try:
         results = []
         
         for file in files:
+            logger.info(f"Processing file: {file.filename}")
             contents = await file.read()
             nparr = np.frombuffer(contents, np.uint8)
             image = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
             
             if image is None:
+                logger.error(f"Failed to decode image: {file.filename}")
                 continue
             
-            boxes, scores, class_ids = yolo.run(image)
+            logger.info(f"Image shape: {image.shape}")
+            
+            try:
+                boxes, scores, class_ids = yolo.run(image)
+                logger.info(f"Detected {len(boxes)} objects")
+            except Exception as e:
+                logger.error(f"Triton inference error: {e}")
+                boxes, scores, class_ids = [], [], []
             
             image_with_boxes = image.copy()
             
@@ -87,6 +101,7 @@ async def detect_objects(files: List[UploadFile] = File(...)):
         return {"results": results}
     
     except Exception as e:
+        logger.error(f"Unexpected error: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=str(e))
 
 if __name__ == "__main__":

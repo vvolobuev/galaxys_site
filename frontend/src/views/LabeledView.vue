@@ -38,7 +38,7 @@
             <span class="image-date">📅 {{ image.date }}</span>
             <span class="image-detections">🎯 {{ image.detections }}</span>
           </div>
-          <button @click.stop="removeImage(index)" class="delete-btn">×</button>
+          <button @click.stop="removeImage(image.id)" class="delete-btn">×</button>
         </div>
       </div>
     </div>
@@ -71,6 +71,7 @@
 </template>
 
 <script>
+import tritonService from '@/services/tritonService'
 import ImageModal from '@/components/ImageModal.vue'
 
 export default {
@@ -120,50 +121,37 @@ export default {
   },
   mounted() {
     this.loadLabeledImages()
-    window.addEventListener('storage', this.handleStorageChange)
-  },
-  beforeUnmount() {
-    window.removeEventListener('storage', this.handleStorageChange)
   },
   methods: {
-    loadLabeledImages() {
+    async loadLabeledImages() {
       this.loading = true
       try {
-        const saved = localStorage.getItem('labeledImages')
-        this.labeledImages = saved ? JSON.parse(saved) : []
+        this.labeledImages = await tritonService.getLabeledImages()
       } catch (error) {
         console.error('Failed to load labeled images:', error)
       } finally {
         this.loading = false
       }
     },
-    handleStorageChange(event) {
-      if (event.key === 'labeledImages') {
-        this.loadLabeledImages()
-      }
-    },
-    removeImage(index) {
+    async removeImage(id) {
       if (confirm('Удалить это изображение?')) {
-        this.labeledImages.splice(index, 1)
-        this.saveToStorage()
+        // Здесь нужно добавить endpoint для удаления
+        this.labeledImages = this.labeledImages.filter(img => img.id !== id)
       }
     },
-    clearAllImages() {
+    async clearAllImages() {
       if (confirm('Удалить все размеченные изображения?')) {
+        // Здесь нужно добавить endpoint для удаления всех
         this.labeledImages = []
-        this.saveToStorage()
       }
-    },
-    saveToStorage() {
-      localStorage.setItem('labeledImages', JSON.stringify(this.labeledImages))
     },
     openModal(image) {
       this.modalImageUrl = image.url
       this.modalTitle = `Изображение от ${image.date}`
       this.modalBoxes = image.boxes || []
       this.modalStats = {
-        width: image.width || 'Оригинал',
-        height: image.height || 'Оригинал',
+        width: 'Оригинал',
+        height: 'Оригинал',
         date: image.date,
         detections: image.detections
       }

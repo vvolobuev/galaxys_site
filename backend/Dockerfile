@@ -1,9 +1,11 @@
-FROM python:3.11-alpine3.19
+FROM python:3.11-alpine
 
 WORKDIR /app
 
-RUN sed -i 's/dl-cdn.alpinelinux.org/mirror.yandex.ru/g' /etc/apk/repositories && \
-    apk update && \
+# Используем официальные репозитории Alpine с явным указанием версии
+RUN echo "https://dl-cdn.alpinelinux.org/alpine/v3.19/main" > /etc/apk/repositories && \
+    echo "https://dl-cdn.alpinelinux.org/alpine/v3.19/community" >> /etc/apk/repositories && \
+    apk update --no-cache && \
     apk add --no-cache \
         libgl1-mesa-glx \
         libstdc++ \

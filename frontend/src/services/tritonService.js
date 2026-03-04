@@ -65,6 +65,7 @@ class TritonService {
       if (response.data && response.data.images) {
         return response.data.images.map(img => ({
           id: img.id,
+          filename: img.filename,  // ← ДОБАВЛЕНО: сохраняем имя файла для удаления
           url: `data:image/jpeg;base64,${img.image_base64}`,
           date: new Date(img.date).toLocaleString(),
           detections: img.detections.length,
@@ -93,6 +94,40 @@ class TritonService {
     } catch (error) {
       console.error('Error saving result:', error)
       throw error
+    }
+  }
+
+  // НОВЫЙ МЕТОД: Удаление одного изображения
+  async deleteImage(filename) {
+    try {
+      const response = await this.client.delete(`/api/images/${encodeURIComponent(filename)}`)
+      return response.data
+    } catch (error) {
+      console.error('Error deleting image:', error)
+      if (error.response) {
+        throw new Error(`Server error: ${error.response.status}`)
+      } else if (error.request) {
+        throw new Error('Backend server not responding')
+      } else {
+        throw new Error(`Request error: ${error.message}`)
+      }
+    }
+  }
+
+  // НОВЫЙ МЕТОД: Удаление всех изображений
+  async deleteAllImages() {
+    try {
+      const response = await this.client.delete('/api/images')
+      return response.data
+    } catch (error) {
+      console.error('Error deleting all images:', error)
+      if (error.response) {
+        throw new Error(`Server error: ${error.response.status}`)
+      } else if (error.request) {
+        throw new Error('Backend server not responding')
+      } else {
+        throw new Error(`Request error: ${error.message}`)
+      }
     }
   }
 

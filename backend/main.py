@@ -157,7 +157,6 @@ async def save_image(data: dict):
         logger.error(f"Error saving image: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=str(e))
     
-    
 @app.get("/api/images")
 async def get_images():
     try:
@@ -181,6 +180,65 @@ async def get_images():
         
     except Exception as e:
         logger.error(f"Error loading images: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+# НОВЫЙ ЭНДПОИНТ: Удаление одного изображения
+@app.delete("/api/images/{filename}")
+async def delete_image(filename: str):
+    try:
+        logger.info(f"Deleting image: {filename}")
+        
+        # Удаляем само изображение
+        img_path = STORAGE_PATH / filename
+        if img_path.exists():
+            img_path.unlink()
+            logger.info(f"Image deleted: {img_path}")
+        else:
+            logger.warning(f"Image not found: {img_path}")
+        
+        # Удаляем метаданные
+        metadata_path = METADATA_PATH / f"{filename}.json"
+        if metadata_path.exists():
+            metadata_path.unlink()
+            logger.info(f"Metadata deleted: {metadata_path}")
+        else:
+            logger.warning(f"Metadata not found: {metadata_path}")
+        
+        return {"status": "deleted", "filename": filename}
+        
+    except Exception as e:
+        logger.error(f"Error deleting image: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=str(e))
+
+# НОВЫЙ ЭНДПОИНТ: Удаление всех изображений
+@app.delete("/api/images")
+async def delete_all_images():
+    try:
+        logger.info("Deleting all images")
+        
+        # Удаляем все изображения
+        img_count = 0
+        for img_file in STORAGE_PATH.glob("*"):
+            if img_file.is_file():
+                img_file.unlink()
+                img_count += 1
+        
+        # Удаляем все метаданные
+        meta_count = 0
+        for meta_file in METADATA_PATH.glob("*.json"):
+            if meta_file.is_file():
+                meta_file.unlink()
+                meta_count += 1
+        
+        logger.info(f"Deleted {img_count} images and {meta_count} metadata files")
+        return {
+            "status": "all_deleted", 
+            "deleted_images": img_count,
+            "deleted_metadata": meta_count
+        }
+        
+    except Exception as e:
+        logger.error(f"Error deleting all images: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=str(e))
 
 if __name__ == "__main__":

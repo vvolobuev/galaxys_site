@@ -38,7 +38,7 @@
             <span class="image-date">📅 {{ image.date }}</span>
             <span class="image-detections">🎯 {{ image.detections }}</span>
           </div>
-          <button @click.stop="removeImage(image.id)" class="delete-btn">×</button>
+          <button @click.stop="removeImage(image)" class="delete-btn">×</button>
         </div>
       </div>
     </div>
@@ -89,7 +89,8 @@ export default {
       modalImageUrl: '',
       modalTitle: '',
       modalBoxes: [],
-      modalStats: null
+      modalStats: null,
+      deleting: false // флаг для предотвращения множественных удалений
     }
   },
   computed: {
@@ -129,22 +130,59 @@ export default {
         this.labeledImages = await tritonService.getLabeledImages()
       } catch (error) {
         console.error('Failed to load labeled images:', error)
+        alert('Ошибка при загрузке изображений')
       } finally {
         this.loading = false
       }
     },
-    async removeImage(id) {
+    
+    async removeImage(image) {
+      if (this.deleting) return // предотвращаем двойное нажатие
+      
       if (confirm('Удалить это изображение?')) {
-        // Здесь нужно добавить endpoint для удаления
-        this.labeledImages = this.labeledImages.filter(img => img.id !== id)
+        this.deleting = true
+        
+        try {
+          // Отправляем запрос на удаление на сервер
+          await tritonService.deleteImage(image.filename)
+          
+          // Если успешно, удаляем из локального массива
+          this.labeledImages = this.labeledImages.filter(img => img.id !== image.id)
+          
+        } catch (error) {
+          console.error('Error deleting image:', error)
+          alert('Ошибка при удалении изображения')
+        } finally {
+          this.deleting = false
+        }
       }
     },
+    
     async clearAllImages() {
-      if (confirm('Удалить все размеченные изображения?')) {
-        // Здесь нужно добавить endpoint для удаления всех
-        this.labeledImages = []
+      if (this.deleting) return
+      
+      if (confirm('Удалить все размеченные изображения? Это действие нельзя отменить!')) {
+        this.deleting = true
+        
+        try {
+          // Отправляем запрос на удаление всех изображений
+          const result = await tritonService.deleteAllImages()
+          
+          // Очищаем локальный массив
+          this.labeledImages = []
+          
+          // Показываем сообщение о результате
+          alert(`Удалено ${result.deleted_images} изображений и ${result.deleted_metadata} файлов метаданных`)
+          
+        } catch (error) {
+          console.error('Error deleting all images:', error)
+          alert('Ошибка при удалении всех изображений')
+        } finally {
+          this.deleting = false
+        }
       }
     },
+    
     openModal(image) {
       this.modalImageUrl = image.url
       this.modalTitle = `Изображение от ${image.date}`
@@ -157,6 +195,7 @@ export default {
       }
       this.modalShow = true
     },
+    
     closeModal() {
       this.modalShow = false
     }
@@ -165,6 +204,7 @@ export default {
 </script>
 
 <style scoped>
+/* Стили остаются без изменений */
 .labeled {
   max-width: 1200px;
   margin: 0 auto;

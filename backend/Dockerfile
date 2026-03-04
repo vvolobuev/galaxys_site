@@ -3,7 +3,7 @@ FROM python:3.11-alpine
 WORKDIR /app
 
 RUN apk add --no-cache \
-    libgl1-mesa-glx \
+    mesa-gl \
     libstdc++ \
     curl
 

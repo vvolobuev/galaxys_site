@@ -1,15 +1,12 @@
-FROM python:3.11-alpine
+FROM python:3.11-slim
 
 WORKDIR /app
 
-# Используем официальные репозитории Alpine с явным указанием версии
-RUN echo "https://dl-cdn.alpinelinux.org/alpine/v3.19/main" > /etc/apk/repositories && \
-    echo "https://dl-cdn.alpinelinux.org/alpine/v3.19/community" >> /etc/apk/repositories && \
-    apk update --no-cache && \
-    apk add --no-cache \
-        libgl1-mesa-glx \
-        libstdc++ \
-        curl
+RUN apt-get update && apt-get install -y \
+    libgl1 \
+    libglib2.0-0 \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
 
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt

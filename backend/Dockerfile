@@ -1,11 +1,13 @@
-FROM python:3.11-alpine
+FROM python:3.11-alpine3.19
 
 WORKDIR /app
 
-RUN apk add --no-cache \
-    libgl1-mesa-glx \
-    libstdc++ \
-    curl
+RUN sed -i 's/dl-cdn.alpinelinux.org/mirror.yandex.ru/g' /etc/apk/repositories && \
+    apk update && \
+    apk add --no-cache \
+        libgl1-mesa-glx \
+        libstdc++ \
+        curl
 
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt

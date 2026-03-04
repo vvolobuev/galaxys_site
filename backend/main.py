@@ -38,7 +38,7 @@ yolo = TritonYOLO(server_url=TRITON_URL, conf_threshold=0.25, iou_threshold=0.3)
 @app.get("/health")
 async def health_check():
     try:
-        dummy = np.zeros((224, 224, 3), dtype=np.uint8)
+        dummy = np.zeros((448, 448, 3), dtype=np.uint8)
         boxes, scores, class_ids = yolo.run(dummy)
         triton_status = "connected"
     except Exception as e:
@@ -92,7 +92,7 @@ async def detect_objects(files: List[UploadFile] = File(...)):
                 cv2.putText(image_with_boxes, label, (x, y - 5), 
                            cv2.FONT_HERSHEY_SIMPLEX, font_scale, (0, 255, 0), 2)
             h, w = image_with_boxes.shape[:2]
-            new_w = 424
+            new_w = 448
             new_h = int((h / w) * new_w)
             image_resized = cv2.resize(image_with_boxes, (new_w, new_h))
 
